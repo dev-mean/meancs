@@ -1,0 +1,20 @@
+{
+  "name": "meancs",
+  "version": "0.0.0",
+  "license": "MIT",
+  "description": "chat server",
+  "main": "",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "express": "^4.14.0",
+    "mongodb": "^2.2.16",
+    "mongoose": "^4.7.2",
+    "socket.io": "^1.7.2"
+  },
+  "devDependencies": {},
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jugal-ionic/meancs.git"
+  }
+}
