@@ -20,9 +20,19 @@ var _mongoose = require('mongoose');
 
 var _mongoose2 = _interopRequireDefault(_mongoose);
 
+var _DatabaseProvider = require('./js/DatabaseProvider');
+
+var _UserProvider = require('./js/UserProvider');
+
 var _util = require('../shared/util');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/**
+ * Configure the user provider (mongodB connection for user data storage)
+ */
+var databaseProvider = new _DatabaseProvider.DatabaseProvider();
+var userProvider = new _UserProvider.UserProvider(databaseProvider);
 
 var app = (0, _express2.default)();
 var server = _http2.default.Server(app);
@@ -31,21 +41,8 @@ var port = 3000; //process.env.PORT ||
 var users = [];
 var sockets = {};
 
-_mongoose2.default.connect("mongodb://127.0.0.1:27017/meancs");
-
 app.use((0, _compression2.default)({}));
 app.use(_express2.default['static'](__dirname + '/../client'));
-// create a schema for chat
-var ChatSchema = _mongoose2.default.Schema({
-    created: Date,
-    content: String,
-    username: String,
-    room: String
-});
-
-// create a model from the chat schema
-var Chat = _mongoose2.default.model('Chat', ChatSchema);
-
 // allow CORS
 app.all('*', function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
@@ -57,25 +54,49 @@ app.all('*', function (req, res, next) {
         next();
     }
 });
+/*||||||||||||||||||||||ROUTES|||||||||||||||||||||||||*/
+
+/*||||||||||||||||||END ROUTES|||||||||||||||||||||*/
+
 io.on('connection', function (socket) {
-    var nick = socket.handshake.query.nick;
+    var email = socket.handshake.query.email;
     var currentUser = {
         id: socket.id,
-        nick: nick
+        email: email
     };
 
-    if ((0, _util.findIndex)(users, currentUser.id) > -1) {
-        console.log('[INFO] User ID is already connected, kicking.');
-        socket.disconnect();
-    } else if (!(0, _util.validNick)(currentUser.nick)) {
-        socket.disconnect();
-    } else {
-        console.log('[INFO] User ' + currentUser.nick + ' connected!');
-        sockets[currentUser.id] = socket;
-        users.push(currentUser);
-        io.emit('userJoin', { nick: currentUser.nick });
-        console.log('[INFO] Total users: ' + users.length);
-    }
+    userProvider.getByEmail(currentUser.email, function (error, getByEmailDocs) {
+        if (error) {
+            console.log(error);
+            socket.disconnect();
+        } else {
+            console.log(getByEmailDocs);
+            if (getByEmailDocs === null) {
+                if (!(0, _util.validEmail)(currentUser.email)) {
+                    socket.disconnect();
+                } else {
+                    console.log('[INFO] User ' + currentUser.email + ' connected!');
+                    sockets[currentUser.id] = socket;
+                    userProvider.save(currentUser, function (error, currentUserDocs) {
+                        if (error) {
+                            console.log(error);
+                            socket.disconnect();
+                        } else {
+                            console.log(currentUserDocs);
+                            io.emit('userJoin', { email: currentUser.email });
+                            userProvider.totalCount(function (error, totalCountDocs) {
+                                if (error) console.log(error);else console.log('[INFO] Total users: ' + totalCountDocs);
+                            });
+                        }
+                    });
+                }
+            } else {
+                console.log(getByEmailDocs);
+                console.log('[INFO] User ID is already connected, kicking.');
+                socket.disconnect();
+            }
+        }
+    });
 
     socket.on('ding', function () {
         socket.emit('dong');
@@ -83,18 +104,18 @@ io.on('connection', function (socket) {
 
     socket.on('disconnect', function () {
         if ((0, _util.findIndex)(users, currentUser.id) > -1) users.splice((0, _util.findIndex)(users, currentUser.id), 1);
-        console.log('[INFO] User ' + currentUser.nick + ' disconnected!');
-        socket.broadcast.emit('userDisconnect', { nick: currentUser.nick });
+        console.log('[INFO] User ' + currentUser.email + ' disconnected!');
+        socket.broadcast.emit('userDisconnect', { email: currentUser.email });
     });
 
     socket.on('userChat', function (data) {
-        var _nick = (0, _util.sanitizeString)(data.nick);
+        var _email = (0, _util.sanitizeString)(data.email);
         var _message = (0, _util.sanitizeString)(data.message);
         var date = new Date();
         var time = ("0" + date.getHours()).slice(-2) + ("0" + date.getMinutes()).slice(-2);
 
-        console.log('[CHAT] [' + time + '] ' + _nick + ': ' + _message);
-        socket.broadcast.emit('serverSendUserChat', { nick: _nick, message: _message });
+        console.log('[CHAT] [' + time + '] ' + _email + ': ' + _message);
+        socket.broadcast.emit('serverSendUserChat', { email: _email, message: _message });
     });
 });
 

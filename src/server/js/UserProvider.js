@@ -1,6 +1,6 @@
 var _ = require("underscore")
 
-UserProvider = function(db) {
+let UserProvider = function(db) {
     this.db = db;
 };
 
@@ -36,6 +36,28 @@ UserProvider.prototype.findAll = function(callback) {
     });
 };
 
+UserProvider.prototype.totalCount = function(callback) {
+    this.getCollection(function(error, user_collection) {
+        if (error) {
+            callback(error)
+        } else {
+            user_collection.find(function(error, cursor) {
+                if (error) {
+                    callback(error)
+                } else {
+                    cursor.toArray(function(error, results) {
+                        if (error) {
+                            callback(error)
+                        } else {
+                            callback(null, results.length)
+                        }
+                    });
+                }
+            });
+        }
+    });
+};
+
 UserProvider.prototype.save = function(users, callback) {
     this.getCollection(function(error, user_collection) {
         if (error) {
@@ -44,11 +66,10 @@ UserProvider.prototype.save = function(users, callback) {
             if (typeof users.length === "undefined") {
                 users = [users];
                 for (var i = 0; i < users.length; i++) {
-                    user = users[i];
+                    var user = users[i];
                     user.created_at = new Date();
                 }
-
-                user_collection.insert(users, function() {
+                user_collection.insert(users, function() {                    
                     callback(null, users);
                 });
             }
@@ -78,8 +99,25 @@ UserProvider.prototype.getByHandle = function(handle, callback) {
             callback(error);
         } else {
             if (typeof handle !== 'undefined') {
-                console.log('deletion by handle');
+                console.log('get by handle');
                 user_collection.findOne({'handle':handle}, function(error, result) {
+                    callback(null, result);
+                });
+            }
+
+
+        }
+    });
+};
+
+UserProvider.prototype.getByEmail = function(email, callback) {
+    this.getCollection(function(error, user_collection) {
+        if (error) {
+            callback(error);
+        } else {
+            if (typeof email !== 'undefined') {
+                console.log(email);
+                user_collection.findOne({'email':email}, function(error, result) {
                     callback(null, result);
                 });
             }

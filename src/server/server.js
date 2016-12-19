@@ -5,7 +5,17 @@ import http from 'http';
 import SocketIO from 'socket.io';
 import compression from 'compression';
 import mongoose from 'mongoose';
+import {DatabaseProvider} from './js/DatabaseProvider';
+import {UserProvider} from './js/UserProvider';
 import {validEmail, findIndex, sanitizeString} from '../shared/util';
+
+
+/**
+ * Configure the user provider (mongodB connection for user data storage)
+ */
+let databaseProvider = new DatabaseProvider();
+let userProvider = new UserProvider(databaseProvider);
+
 
 let app = express();
 let server = http.Server(app);
@@ -14,46 +24,23 @@ let port = 3000;//process.env.PORT ||
 let users = [];
 let sockets = {};
 
-mongoose.connect("mongodb://127.0.0.1:27017/meancs");
 
 app.use(compression({}));
 app.use(express['static'](__dirname + '/../client'));
-// create a schema for chat
-    var UserSchema = mongoose.Schema({
-      created: Date,
-      id: String,
-      username: String,
-      email: String
-    });
+// allow CORS
+app.all('*', function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key');
+  if (req.method == 'OPTIONS') {
+res.status(200).end();
+  } else {
+next();
+  }
+});
+/*||||||||||||||||||||||ROUTES|||||||||||||||||||||||||*/
 
-    // create a model from the chat schema
-    var Chat = mongoose.model('Chat', ChatSchema);
-
-    // allow CORS
-    app.all('*', function(req, res, next) {
-      res.header("Access-Control-Allow-Origin", "*");
-      res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key');
-      if (req.method == 'OPTIONS') {
-        res.status(200).end();
-      } else {
-        next();
-      }
-    });
-    /*||||||||||||||||||||||ROUTES|||||||||||||||||||||||||*/
-
-    //This route produces a list of chat as filterd by 'room' query
-    app.get('/msg', function(req, res) {
-      //Find
-      Chat.find({
-        'room': req.query.room.toLowerCase()
-      }).exec(function(err, msgs) {
-        //Send
-        res.json(msgs);
-      });
-    });
-
-    /*||||||||||||||||||END ROUTES|||||||||||||||||||||*/
+/*||||||||||||||||||END ROUTES|||||||||||||||||||||*/
 
 io.on('connection', (socket) => {
     let email = socket.handshake.query.email;
@@ -61,22 +48,54 @@ io.on('connection', (socket) => {
         id: socket.id,
         email: email
     };
-
-    if (findIndex(users, currentUser.id) > -1) {
-        console.log('[INFO] User ID is already connected, kicking.');
-        socket.disconnect();
-    } else if (!validEmail(currentUser.email)) {
-        socket.disconnect();
-    } else {
-        console.log('[INFO] User ' + currentUser.email + ' connected!');
-        sockets[currentUser.id] = socket;
-        users.push(currentUser);
-        .save(currentUser, function(error, docs) {
-            res.send({error:error, user:docs});
+    
+    userProvider.getByEmail(currentUser.email,function(error, getByEmailDocs) 
+        {
+            if (error) {
+                console.log(error);
+                socket.disconnect();
+            }
+            else
+            {
+                console.log(getByEmailDocs);
+                if(getByEmailDocs===null)
+                    if (!validEmail(currentUser.email)) 
+                        {
+                            socket.disconnect();
+                        } 
+                    else 
+                        {
+                            console.log('[INFO] User ' + currentUser.email + ' connected!');
+                            sockets[currentUser.id] = socket;
+                            userProvider.save(currentUser, function(error, currentUserDocs) 
+                                {
+                                    if (error)
+                                        {
+                                            console.log(error);
+                                            socket.disconnect();
+                                        }
+                                    else
+                                        {
+                                            console.log(currentUserDocs);
+                                            io.emit('userJoin', {email: currentUser.email});
+                                            userProvider.totalCount(function(error, totalCountDocs) 
+                                                {
+                                                    if (error)
+                                                        console.log(error);
+                                                    else
+                                                        console.log('[INFO] Total users: ' + totalCountDocs);
+                                                });
+                                        }
+                                });
+                        }
+                else
+                    {
+                        console.log(getByEmailDocs);
+                        console.log('[INFO] User ID is already connected, kicking.');
+                        socket.disconnect();
+                    }
+            }
         });
-        io.emit('userJoin', {email: currentUser.email});
-        console.log('[INFO] Total users: ' + users.length);
-    }
 
     socket.on('ding', () => {
         socket.emit('dong');
