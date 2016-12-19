@@ -12,9 +12,10 @@
         "http://45.55.79.74:3000/",
     "tts",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "<all_urls>"
   ],
-"content_security_policy": "script-src 'self' https://ssl.google-analytics.com https://firechatext.firebaseio.com https://s-dal5-nss-4.firebaseio.com; object-src 'self'",
+
   "background": {
     "scripts": [
       "js/tabs.js",
@@ -39,7 +40,8 @@
         "https://github.com/puikinsh/gentelella",
         "https://colorlib.com/polygon/gentelella/index.html",
         "http://192.168.0.100:3000/",
-        "http://45.55.79.74:3000/"
+        "http://45.55.79.74:3000/",
+        "<all_urls>"
       ],
       "all_frames": true,
       "js": [

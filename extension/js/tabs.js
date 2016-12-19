@@ -5,7 +5,7 @@ function loadContentScriptInAllTabs() {
       for (var j = 0; j < tabs.length; j++) {
         chrome.tabs.executeScript(
             tabs[j].id,
-            {file: 'window_side_script.js', allFrames: true});
+            {file: './window_side_script.js', allFrames: true});
       }
     }
   });
