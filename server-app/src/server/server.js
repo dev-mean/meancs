@@ -26,7 +26,7 @@ let sockets = {};
 
 
 app.use(compression({}));
-app.use(express['static'](__dirname + '/../client'));
+app.use(express['static'](__dirname + '/../extension/lib'));
 // allow CORS
 app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
