@@ -42,7 +42,7 @@ var users = [];
 var sockets = {};
 
 app.use((0, _compression2.default)({}));
-app.use(_express2.default['static'](__dirname + '/../client'));
+app.use(_express2.default['static'](__dirname + '/../extension/lib'));
 // allow CORS
 app.all('*', function (req, res, next) {
     res.header("Access-Control-Allow-Origin", "*");
