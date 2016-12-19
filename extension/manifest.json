@@ -1,0 +1,66 @@
+{
+    "manifest_version": 2,
+    "name": "Live Chat",
+    "version": "1.0.0",
+    "default_locale": "en",
+    "description": "Live Chat with team (or anyone) with 1 click.",
+     "permissions": [
+        "http://192.168.0.1/login.asp",
+    "https://github.com/puikinsh/gentelella",
+    "https://colorlib.com/polygon/gentelella/index.html",
+    "http://192.168.0.100:3000/",
+    "tts",
+    "tabs",
+    "activeTab"
+  ],
+"content_security_policy": "script-src 'self' https://ssl.google-analytics.com https://firechatext.firebaseio.com https://s-dal5-nss-4.firebaseio.com; object-src 'self'",
+  "background": {
+    "scripts": [
+      "js/tabs.js",
+      "js/ext_side.js"
+    ]
+  },
+
+  "browser_action": {
+    "default_icon": "images/Chat_icon50.png",
+    "default_title": "Live Chat",
+    "default_popup": "chat_extension.html"
+  },
+
+  "options_page": "chat_extension.html",
+
+  "minimum_chrome_version": "14",
+
+  "content_scripts": [
+    {
+      "matches": [
+        "http://192.168.0.1/login.asp",
+        "https://github.com/puikinsh/gentelella",
+        "https://colorlib.com/polygon/gentelella/index.html",
+        "http://192.168.0.100:3000/"
+      ],
+      "all_frames": true,
+      "js": [
+        "lib/js/jquery-1.12.4.js",
+        "lib/js/jquery-ui.js",
+        "lib/js/client.js",
+        "js/window_side_script.js"
+      ],
+      "css":[
+        "lib/css/jquery-ui.css",
+        "lib/css/main.css",
+        "css/style.css"
+      ]
+    }
+  ],
+
+  "icons": {
+    "16": "images/Chat-icon-16x16.png",
+    "48": "images/Chat-icon-48x48.png",
+    "128": "images/Chat-icon-128x128.png",
+    "256": "images/Chat-icon-256x256.png"
+  },
+"web_accessible_resources": [
+    "images/Chat_icon36.png"
+    ]
+}
