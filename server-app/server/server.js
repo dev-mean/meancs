@@ -42,7 +42,7 @@ var app = (0, _express2.default)();
 
 //app.use(app.router);
 app.use((0, _compression2.default)({}));
-app.use(_express2.default['static'](__dirname + '/../../extension/lib'));
+app.use(_express2.default['static'](__dirname + '/admin'));
 var server = _http2.default.createServer(app).listen(PORT, IP);
 
 var io = new _socket2.default(server);
@@ -66,26 +66,41 @@ var currentSocket = {};
 io.on('connection', function (socket) {
     // Register your client with the server, providing your username
     socket.on('init', function (username) {
+        console.log('init : ' + username);
+
+        var IsNewUser = true;
+        var user = {};
         if (alreadyConnectedUserList.length) {
-            socket.emit('connectedUsersList', alreadyConnectedUserList);
+            for (var i = 0; i < alreadyConnectedUserList.length; i++) {
+                console.log(username + ' : ' + alreadyConnectedUserList[i]);
+                if (username === 'pek') if (alreadyConnectedUserList[i] === username) {
+                    IsNewUser = false;
+                    break;
+                }
+            }
         }
-        alreadyConnectedUserList.push(username);
-        console.log('alreadyConnectedUserList:' + alreadyConnectedUserList.length);
-        users[username] = socket.id; // Store a reference to your socket ID
-        sockets[socket.id] = {
-            username: username,
-            socket: socket
-        };
-        console.log('sockets:' + sockets);
-        // Store a reference to your socket
-        //we will send current user that who all are already connected in chat
-        //send to all users that a new user is connected
-        for (currentSocket in sockets) {
-            if (currentSocket == socket.id) return false;
-            sockets[currentSocket].socket.emit('userJoined', {
-                username: username
-            });
-        };
+        if (IsNewUser) {
+
+            socket.emit('connectedUsersList', alreadyConnectedUserList);
+            alreadyConnectedUserList.push(username);
+            console.log('alreadyConnectedUserList:' + alreadyConnectedUserList.length);
+            users[username] = socket.id; // Store a reference to your socket ID
+            sockets[socket.id] = {
+                username: username,
+                socket: socket
+            };
+            console.log('sockets:' + sockets);
+            // Store a reference to your socket
+            //we will send current user that who all are already connected in chat
+            //send to all users that a new user is connected
+            for (currentSocket in sockets) {
+                if (currentSocket == socket.id) return false;
+                sockets[currentSocket].socket.emit('userJoined', {
+                    username: username
+                });
+            };
+        }
+
         //send all users list to newly connected user
     });
     socket.on('notification', function (obj) {
