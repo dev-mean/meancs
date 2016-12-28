@@ -8,16 +8,16 @@ export default class Chat {
         this.chatInput = document.getElementById('chatInput');
         this.chatList = document.getElementById('chatList');
         this.email = email;
-        this.socket = io('http://192.168.0.100:4000/');
-        this.socket.emit('init', email);
+        this.socket = io.connect('http://'+IP+':'+PORT,{query: "email=" + email});
+        
         this.commands = {};
 
         this.setupSocket();
         this.setupChat();
         this.setupEvents();
     }
-    setupSocket() {
 
+    setupSocket() {
         this.socket.on('dong', () => {
             this.latency = Date.now() - this.startPingTime;
             this.addSystemLine('Ping: ' + this.latency + 'ms');
@@ -30,17 +30,13 @@ export default class Chat {
         this.socket.on('disconnect', () => {
             this.socket.close();
         });
-        this.socket.on('notification', function(data) {         
-            let newline = document.createElement('li');
-        newline.className = (false) ? 'me' : 'friend';
-        newline.innerHTML = '<b>' + ((data.from.length < 1) ? 'Anon' : data.from) + '</b>: ' + data.message;
-console.log(newline);
-this.chatList=document.getElementById('chatList');
-        if (this.chatList.childNodes.length > 10) {
-                this.chatList.removeChild(this.chatList.childNodes[0]);
-            }
-            this.chatList.appendChild(newline);
-        
+
+        this.socket.on('userDisconnect', (data) => {
+            //this.addSystemLine('<b>' + (data.email.length < 1 ? 'Anon' : data.email) + '</b> disconnected.');
+        });
+
+        this.socket.on('userJoin', (data) => {
+            //this.addSystemLine('<b>' + (data.email.length < 1 ? 'Anon' : data.email) + '</b> joined.');
         });
     }
 
@@ -86,7 +82,7 @@ this.chatList=document.getElementById('chatList');
                 }
 
             } else {
-                this.socket.emit('notification', {to: 'pek', message: text});
+                this.socket.emit('userChat', {email: this.email, message: text});
                 this.addChatLine(this.email, text, true);
             }
         }

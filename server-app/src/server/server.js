@@ -1,123 +1,206 @@
 'use strict';
+let IP='192.168.0.100';
+let  PORT='4000';
+//import chatServer from './js/chat-server';
 
 import express from 'express';
 import http from 'http';
 import SocketIO from 'socket.io';
 import compression from 'compression';
-import mongoose from 'mongoose';
-import {DatabaseProvider} from './js/DatabaseProvider';
-import {UserProvider} from './js/UserProvider';
+// import {DatabaseProvider} from './js/DatabaseProvider';
+// import {UserProvider} from './js/UserProvider';
 import {validEmail, findIndex, sanitizeString} from '../shared/util';
-
-
+//import db from './js/chat-db';
 /**
  * Configure the user provider (mongodB connection for user data storage)
  */
-let databaseProvider = new DatabaseProvider();
-let userProvider = new UserProvider(databaseProvider);
+// let databaseProvider = new DatabaseProvider();
+// let userProvider = new UserProvider(databaseProvider);
 
 
 let app = express();
-let server = http.Server(app);
-let io = new SocketIO(server);
-let port = 3000;//process.env.PORT || 
-let users = [];
-let sockets = {};
+// let users = [];
+// let sockets = {};
 
 
+//app.use(app.router);
 app.use(compression({}));
-app.use(express['static'](__dirname + '/../extension/lib'));
+app.use(express['static'](__dirname + '/../../extension/lib'));
+let server = http.createServer(app).listen(PORT, IP); 
+
+let io = new SocketIO(server);
+//chatServer.listen(server);
 // allow CORS
 app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Content-type,Accept,X-Access-Token,X-Key');
   if (req.method == 'OPTIONS') {
-res.status(200).end();
+    res.status(200).end();
   } else {
-next();
+    next();
   }
 });
-/*||||||||||||||||||||||ROUTES|||||||||||||||||||||||||*/
 
-/*||||||||||||||||||END ROUTES|||||||||||||||||||||*/
-
-io.on('connection', (socket) => {
-    let email = socket.handshake.query.email;
-    let currentUser = {
-        id: socket.id,
-        email: email
-    };
-    
-    userProvider.getByEmail(currentUser.email,function(error, getByEmailDocs) 
-        {
-            if (error) {
-                console.log(error);
-                socket.disconnect();
-            }
-            else
-            {
-                console.log(getByEmailDocs);
-                if(getByEmailDocs===null)
-                    if (!validEmail(currentUser.email)) 
-                        {
-                            socket.disconnect();
-                        } 
-                    else 
-                        {
-                            console.log('[INFO] User ' + currentUser.email + ' connected!');
-                            sockets[currentUser.id] = socket;
-                            userProvider.save(currentUser, function(error, currentUserDocs) 
-                                {
-                                    if (error)
-                                        {
-                                            console.log(error);
-                                            socket.disconnect();
-                                        }
-                                    else
-                                        {
-                                            console.log(currentUserDocs);
-                                            io.emit('userJoin', {email: currentUser.email});
-                                            userProvider.totalCount(function(error, totalCountDocs) 
-                                                {
-                                                    if (error)
-                                                        console.log(error);
-                                                    else
-                                                        console.log('[INFO] Total users: ' + totalCountDocs);
-                                                });
-                                        }
-                                });
-                        }
-                else
-                    {
-                        console.log(getByEmailDocs);
-                        console.log('[INFO] User ID is already connected, kicking.');
-                        socket.disconnect();
-                    }
-            }
-        });
-
-    socket.on('ding', () => {
-        socket.emit('dong');
+var users = [];
+var sockets = [];
+var alreadyConnectedUserList = [];
+var currentSocket={};
+io.on('connection', function(socket) {
+    // Register your client with the server, providing your username
+    socket.on('init', function(username) {
+        if (alreadyConnectedUserList.length) {
+            socket.emit('connectedUsersList', alreadyConnectedUserList);
+        }
+        alreadyConnectedUserList.push(username);
+        console.log('alreadyConnectedUserList:'+alreadyConnectedUserList.length);
+        users[username] = socket.id; // Store a reference to your socket ID
+        sockets[socket.id] = {
+            username: username,
+            socket: socket
+        };
+        console.log('sockets:'+sockets);
+         // Store a reference to your socket
+        //we will send current user that who all are already connected in chat
+        //send to all users that a new user is connected
+        for (currentSocket in sockets) {
+            if (currentSocket == socket.id) return false;
+            sockets[currentSocket].socket.emit('userJoined', {
+                username: username
+            });
+        };
+        //send all users list to newly connected user
     });
-
-    socket.on('disconnect', () => {
-        if (findIndex(users, currentUser.id) > -1) users.splice(findIndex(users, currentUser.id), 1);
-        console.log('[INFO] User ' + currentUser.email + ' disconnected!');
-        socket.broadcast.emit('userDisconnect', {email: currentUser.email});
+    socket.on('notification', function(obj) {
+        console.log(obj);
+        if (!users[obj.to]) {
+            console.log("user " + obj.to + " dosent exist");
+            return false;
+        }
+        // Lookup the socket of the user you want to private message, and send them your message
+        try {
+            sockets[users[obj.to]].socket.emit('notification', {
+                message: obj.message,
+                from: sockets[socket.id].username
+            });
+        } catch (e) {
+            console.error("Error when sending data: " + e);
+        }
     });
-
-    socket.on('userChat', (data) => {
-        let _email = sanitizeString(data.email);
-        let _message = sanitizeString(data.message);
-        let date = new Date();
-        let time = ("0" + date.getHours()).slice(-2) + ("0" + date.getMinutes()).slice(-2);
-
-        console.log('[CHAT] [' + time + '] ' + _email + ': ' + _message);
-        socket.broadcast.emit('serverSendUserChat', {email: _email, message: _message});
+    socket.on('disconnect', function() {
+        var disconnectedUsername = null;
+        for (currentSocket in sockets) {
+            if (currentSocket == socket.id) {
+                disconnectedUsername = sockets[currentSocket].username;
+                delete users[sockets[currentSocket].username];
+                alreadyConnectedUserList.splice(alreadyConnectedUserList.indexOf(sockets[currentSocket].username), 1);
+                delete sockets[currentSocket];
+            }
+        }
+        if (disconnectedUsername) {
+            for (currentSocket in sockets) {
+                sockets[currentSocket].socket.emit('userDisconnected', {
+                    username: disconnectedUsername
+                });
+            }
+        }
     });
 });
 
-server.listen(port, () => {
-    console.log('[INFO] Listening on *:' + port);
-});
+
+server.on('error', onError);
+server.on('listening', onListening);
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  console.log('Listening on ' + bind);
+}
+
+// io.on('connection', function(socket) {
+    //     // Register your client with the server, providing your username
+    //     socket.on('init', function(username) {
+    //         if (alreadyConnectedUserList.length) {
+    //             socket.emit('connectedUsersList', alreadyConnectedUserList);
+    //         }
+    //         alreadyConnectedUserList.push(username)
+    //         users[username] = socket.id; // Store a reference to your socket ID
+    //         sockets[socket.id] = {
+    //             username: username,
+    //             socket: socket
+    //         }; // Store a reference to your socket
+    //         //we will send current user that who all are already connected in chat
+    //         //send to all users that a new user is connected
+    //         for (currentSocket in sockets) {
+    //             if (currentSocket == socket.id) return false;
+    //             sockets[currentSocket].socket.emit('userJoined', {
+    //                 username: username
+    //             });
+    //         };
+    //         //send all users list to newly connected user
+    //     });
+    //     socket.on('notification', function(obj) {
+    //         console.log(obj);
+    //         if (!users[obj.to]) {
+    //             console.log("user " + obj.to + " dosent exist");
+    //             return false;
+    //         }
+    //         // Lookup the socket of the user you want to private message, and send them your message
+    //         try {
+    //             sockets[users[obj.to]].socket.emit('notification', {
+    //                 message: obj.message,
+    //                 from: sockets[socket.id].username
+    //             });
+    //         } catch (e) {
+    //             console.error("Error when sending data: " + e);
+    //         }
+    //     });
+    //     socket.on('disconnect', function() {
+    //         var disconnectedUsername = null;
+    //         for (currentSocket in sockets) {
+    //             if (currentSocket == socket.id) {
+    //                 disconnectedUsername = sockets[currentSocket].username;
+    //                 delete users[sockets[currentSocket].username];
+    //                 alreadyConnectedUserList.splice(alreadyConnectedUserList.indexOf(sockets[currentSocket].username), 1);
+    //                 delete sockets[currentSocket];
+    //             }
+    //         }
+    //         if (disconnectedUsername) {
+    //             for (currentSocket in sockets) {
+    //                 sockets[currentSocket].socket.emit('userDisconnected', {
+    //                     username: disconnectedUsername
+    //                 });
+    //             }
+    //         }
+    //     });
+// });

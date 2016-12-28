@@ -9,7 +9,7 @@ function initContentScript() {
             var firechatwrapper = document.getElementById('firechat-wrapper');
             firechatwrapperdiv.setAttribute('id','firechat-wrapper');
             firechatwrapperdiv.setAttribute("style", "display:none;");
-            firechatwrapperdiv.innerHTML='<div class="chatbox" id="chatbox"><ul id="chatList" class="chat-list"></ul><input id="chatInput" type="text" class="chat-input" placeholder="Chat here..." maxlength="35" /></div><div id="startMenu"><input type="text" tabindex="0" autofocus placeholder="Enter your name here" id="userNameInput" maxlength="25" /><b class="input-error">Nick must be alphanumeric characters only!</b><br /><a><button id="startButton">Chat</button></a></div>';
+            firechatwrapperdiv.innerHTML='<div class="chatbox" id="chatbox"><ul id="chatList" class="chat-list"></ul><input id="chatInput" type="text" class="chat-input" placeholder="Chat here..." maxlength="35" /></div><div id="startMenu"><input type="text" tabindex="0" autofocus placeholder="Enter your name here" id="userNameInput" maxlength="25" /><b class="input-error">Name/Email must be alphanumeric characters only!</b><br /><a><button id="startButton">Chat</button></a></div>';
             
             var imgURL = chrome.extension.getURL("images/Chat_icon36.png");
             jugaldiv.setAttribute("style", 'background-repeat: no-repeat;'
