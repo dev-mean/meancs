@@ -1,5 +1,7 @@
 import io from 'socket.io-client';
-var socket = io('http://192.168.0.100:4000/');
+var IP='45.55.79.74';
+var  PORT='3000';
+var socket = io('http://'+IP+':'+PORT);
 class Client {
     constructor () {
         let btnSend = document.getElementById('sendButton'),
