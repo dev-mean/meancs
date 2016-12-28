@@ -7,7 +7,7 @@ export default class Chat {
         this.chatInput = document.getElementById('chatInput');
         this.chatList = document.getElementById('chatList');
         this.email = email;
-        this.socket = io('http://'+PORT+':'+IP);
+        this.socket = io('http://'+IP+':'+PORT);
         this.socket.emit('init', email);
         this.commands = {};
 
