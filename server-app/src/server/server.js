@@ -1,6 +1,6 @@
 'use strict';
-let IP='192.168.0.100';
-let  PORT='4000';
+let IP='45.55.79.74';
+let  PORT='3000';
 //import chatServer from './js/chat-server';
 
 import express from 'express';

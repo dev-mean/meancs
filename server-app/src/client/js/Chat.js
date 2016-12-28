@@ -1,14 +1,13 @@
-let IP='192.168.0.100';
-let PORT='3030';
 import io from 'socket.io-client';
 import {sanitizeString} from '../../shared/util';
-
+let IP='45.55.79.74';
+let  PORT='3000';
 export default class Chat {
     constructor(email) {
         this.chatInput = document.getElementById('chatInput');
         this.chatList = document.getElementById('chatList');
         this.email = email;
-        this.socket = io('http://192.168.0.100:4000/');
+        this.socket = io('http://'+PORT+':'+IP);
         this.socket.emit('init', email);
         this.commands = {};
 

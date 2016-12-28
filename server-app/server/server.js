@@ -20,8 +20,8 @@ var _util = require('../shared/util');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var IP = '192.168.0.100';
-var PORT = '4000';
+var IP = '45.55.79.74';
+var PORT = '3000';
 //import chatServer from './js/chat-server';
 
 // import {DatabaseProvider} from './js/DatabaseProvider';
