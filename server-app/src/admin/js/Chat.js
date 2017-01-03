@@ -1,6 +1,7 @@
 import io from 'socket.io-client';
 import {sanitizeString} from '../../shared/util';
-let IP='192.168.0.100';
+let IP='127.0.0.1';
+//let IP='192.168.0.100';
 //let IP='45.55.79.74';
 let  PORT='3000';
 export default class Chat {
