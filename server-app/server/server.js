@@ -20,7 +20,9 @@ var _util = require('../shared/util');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var IP = '45.55.79.74';
+var IP = '127.0.0.1';
+// let IP = '192.168.0.100';
+///let IP='45.55.79.74';
 var PORT = '3000';
 //import chatServer from './js/chat-server';
 
@@ -67,20 +69,26 @@ io.on('connection', function (socket) {
     // Register your client with the server, providing your username
     socket.on('init', function (username) {
         console.log('init : ' + username);
-
         var IsNewUser = true;
         var user = {};
+
         if (alreadyConnectedUserList.length) {
+            console.log('alreadyConnectedUserList:' + alreadyConnectedUserList.length);
             for (var i = 0; i < alreadyConnectedUserList.length; i++) {
                 console.log(username + ' : ' + alreadyConnectedUserList[i]);
-                if (username === 'pek') if (alreadyConnectedUserList[i] === username) {
-                    IsNewUser = false;
-                    break;
+                if (username === 'pek') {
+                    if (alreadyConnectedUserList[i] === username) {
+                        IsNewUser = false;
+                        break;
+                    }
+                    if (alreadyConnectedUserList[i] === 'pek') {
+                        IsNewUser = false;
+                        break;
+                    }
                 }
             }
         }
         if (IsNewUser) {
-
             socket.emit('connectedUsersList', alreadyConnectedUserList);
             alreadyConnectedUserList.push(username);
             console.log('alreadyConnectedUserList:' + alreadyConnectedUserList.length);
@@ -89,25 +97,24 @@ io.on('connection', function (socket) {
                 username: username,
                 socket: socket
             };
-            console.log('sockets:' + sockets);
-            // Store a reference to your socket
-            //we will send current user that who all are already connected in chat
-            //send to all users that a new user is connected
-            for (currentSocket in sockets) {
-                if (currentSocket == socket.id) return false;
-                sockets[currentSocket].socket.emit('userJoined', {
-                    username: username
-                });
-            };
         }
-
+        console.log('sockets:' + sockets);
+        // Store a reference to your socket
+        //we will send current user that who all are already connected in chat
+        //send to all users that a new user is connected
+        for (currentSocket in sockets) {
+            if (currentSocket == socket.id) return false;
+            sockets[currentSocket].socket.emit('userJoined', {
+                username: username
+            });
+        };
         //send all users list to newly connected user
     });
     socket.on('notification', function (obj) {
         console.log(obj);
         if (!users[obj.to]) {
             console.log("user " + obj.to + " dosent exist");
-            return false;
+            return 1;
         }
         // Lookup the socket of the user you want to private message, and send them your message
         try {
@@ -147,7 +154,7 @@ function onError(error) {
         throw error;
     }
 
-    var bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port;
+    var bind = typeof PORT === 'string' ? 'Pipe ' + PORT : 'Port ' + PORT;
 
     // handle specific listen errors with friendly messages
     switch (error.code) {
@@ -173,61 +180,3 @@ function onListening() {
     var bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr.port;
     console.log('Listening on ' + bind);
 }
-
-// io.on('connection', function(socket) {
-//     // Register your client with the server, providing your username
-//     socket.on('init', function(username) {
-//         if (alreadyConnectedUserList.length) {
-//             socket.emit('connectedUsersList', alreadyConnectedUserList);
-//         }
-//         alreadyConnectedUserList.push(username)
-//         users[username] = socket.id; // Store a reference to your socket ID
-//         sockets[socket.id] = {
-//             username: username,
-//             socket: socket
-//         }; // Store a reference to your socket
-//         //we will send current user that who all are already connected in chat
-//         //send to all users that a new user is connected
-//         for (currentSocket in sockets) {
-//             if (currentSocket == socket.id) return false;
-//             sockets[currentSocket].socket.emit('userJoined', {
-//                 username: username
-//             });
-//         };
-//         //send all users list to newly connected user
-//     });
-//     socket.on('notification', function(obj) {
-//         console.log(obj);
-//         if (!users[obj.to]) {
-//             console.log("user " + obj.to + " dosent exist");
-//             return false;
-//         }
-//         // Lookup the socket of the user you want to private message, and send them your message
-//         try {
-//             sockets[users[obj.to]].socket.emit('notification', {
-//                 message: obj.message,
-//                 from: sockets[socket.id].username
-//             });
-//         } catch (e) {
-//             console.error("Error when sending data: " + e);
-//         }
-//     });
-//     socket.on('disconnect', function() {
-//         var disconnectedUsername = null;
-//         for (currentSocket in sockets) {
-//             if (currentSocket == socket.id) {
-//                 disconnectedUsername = sockets[currentSocket].username;
-//                 delete users[sockets[currentSocket].username];
-//                 alreadyConnectedUserList.splice(alreadyConnectedUserList.indexOf(sockets[currentSocket].username), 1);
-//                 delete sockets[currentSocket];
-//             }
-//         }
-//         if (disconnectedUsername) {
-//             for (currentSocket in sockets) {
-//                 sockets[currentSocket].socket.emit('userDisconnected', {
-//                     username: disconnectedUsername
-//                 });
-//             }
-//         }
-//     });
-// });

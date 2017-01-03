@@ -1,13 +1,15 @@
 import io from 'socket.io-client';
-import {sanitizeString} from '../../shared/util';
-let IP='45.55.79.74';
-let  PORT='3000';
+import { sanitizeString } from '../../shared/util';
+let IP = '127.0.0.1';
+// let IP = '192.168.0.100';
+//let IP='45.55.79.74';
+let PORT = '3000';
 export default class Chat {
     constructor(email) {
         this.chatInput = document.getElementById('chatInput');
         this.chatList = document.getElementById('chatList');
         this.email = email;
-        this.socket = io('http://'+IP+':'+PORT);
+        this.socket = io('http://' + IP + ':' + PORT);
         this.socket.emit('init', email);
         this.commands = {};
 
@@ -29,17 +31,17 @@ export default class Chat {
         this.socket.on('disconnect', () => {
             this.socket.close();
         });
-        this.socket.on('notification', function(data) {         
+        this.socket.on('notification', function(data) {
             let newline = document.createElement('li');
-        newline.className = (false) ? 'me' : 'friend';
-        newline.innerHTML = '<b>' + ((data.from.length < 1) ? 'Anon' : data.from) + '</b>: ' + data.message;
-console.log(newline);
-this.chatList=document.getElementById('chatList');
-        if (this.chatList.childNodes.length > 10) {
+            newline.className = (false) ? 'me' : 'friend';
+            newline.innerHTML = '<b>' + ((data.from.length < 1) ? 'Anon' : data.from) + '</b>: ' + data.message;
+            console.log(newline);
+            this.chatList = document.getElementById('chatList');
+            if (this.chatList.childNodes.length > 10) {
                 this.chatList.removeChild(this.chatList.childNodes[0]);
             }
             this.chatList.appendChild(newline);
-        
+
         });
     }
 
@@ -85,7 +87,7 @@ this.chatList=document.getElementById('chatList');
                 }
 
             } else {
-                this.socket.emit('notification', {to: 'pek', message: text});
+                this.socket.emit('notification', { to: 'pek', message: text });
                 this.addChatLine(this.email, text, true);
             }
         }

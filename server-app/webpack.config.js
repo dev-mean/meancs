@@ -6,11 +6,11 @@ module.exports = {
         main: './src/client/js/client.js'
     },
     output: {
-        path: path.resolve("./dist/client/js"),
+        path: path.resolve("./extension/lib/js"),
         filename: 'client.js'
     },
     module: {
-        loaders: [{loader: 'babel-loader'}]
+        loaders: [{ loader: 'babel-loader' }]
     },
     devtool: 'source-map',
     plugins: [

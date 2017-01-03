@@ -1,16 +1,16 @@
 'use strict';
 
 import gulp from 'gulp';
-import webpackStream  from 'webpack-stream';
+import webpackStream from 'webpack-stream';
 import nodemon from 'gulp-nodemon';
 import babel from 'gulp-babel';
 
-gulp.task('build', ['build-client','build-admin', 'build-server']);//'build-admin',
+gulp.task('build', ['build-client', 'build-admin', 'build-server']); //'build-admin',
 
 gulp.task('build-client', ['client-copy-assets'], () =>
     gulp.src('src/client/js/client.js')
-        .pipe(webpackStream(require('./webpack.config.js')))
-        .pipe(gulp.dest('../extension/lib/js'))
+    .pipe(webpackStream(require('./webpack.config.js')))
+    .pipe(gulp.dest('../extension/lib/js'))
 );
 gulp.task('client-copy-assets', () =>
     gulp.src(['src/client/**/*.*', '!src/client/js/**/*.*'])
@@ -19,8 +19,8 @@ gulp.task('client-copy-assets', () =>
 
 gulp.task('build-admin', ['admin-copy-assets'], () =>
     gulp.src('src/admin/js/client.js')
-        .pipe(webpackStream(require('./webpack-admin.config.js')))
-        .pipe(gulp.dest('server/admin/js'))
+    .pipe(webpackStream(require('./webpack-admin.config.js')))
+    .pipe(gulp.dest('server/admin/js'))
 );
 gulp.task('admin-copy-assets', () =>
     gulp.src(['src/admin/**/*.*', '!src/admin/js/**/*.*'])
@@ -36,8 +36,8 @@ gulp.task('build-server', ['build-shared'], () =>
 
 gulp.task('build-shared', () =>
     gulp.src(['src/shared/**/*.*'])
-        .pipe(babel())
-        .pipe(gulp.dest('shared/'))
+    .pipe(babel())
+    .pipe(gulp.dest('shared/'))
 );
 
 gulp.task('watch', ['build'], () => {

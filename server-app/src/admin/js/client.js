@@ -1,36 +1,38 @@
 import io from 'socket.io-client';
-var IP='45.55.79.74';
-var  PORT='3000';
-var socket = io('http://'+IP+':'+PORT);
+let IP = '127.0.0.1';
+// let IP = '192.168.0.100';
+// var IP='45.55.79.74';
+var PORT = '3000';
+var socket = io('http://' + IP + ':' + PORT);
 class Client {
-    constructor () {
+    constructor() {
         let btnSend = document.getElementById('sendButton'),
-        userNameInput = document.getElementById('userNameInput');
-    btnSend.onclick = () => {
+            userNameInput = document.getElementById('userNameInput');
+        btnSend.onclick = () => {
             this.sendMessage();
-    };
-    console.log('init');
-    socket.emit('init', 'pek');
+        };
+        console.log('init');
+        socket.emit('init', 'pek');
     }
-sendMessage(){
-    var toUsername = $("select.toUserSelectBox").val();
-    var message = $("#chatInput").val();
-    if (!toUsername || !toUsername.trim().length || !message.trim().length) {
-        alert("Enter valid username & message");
-        return false;
+    sendMessage() {
+        var toUsername = $("select.toUserSelectBox").val();
+        var message = $("#chatInput").val();
+        if (!toUsername || !toUsername.trim().length || !message.trim().length) {
+            alert("Enter valid username & message");
+            return false;
+        }
+        $("div.message").append("<p class='sent'>Me: <b>" + message + "</b> - " + toUsername + "</p>").scrollTop($("div.message")[0].scrollHeight);
+        socket.emit('notification', {
+            to: toUsername,
+            message: message
+        });
+        $("#chatInput").val("").focus();
     }
-    $("div.message").append("<p class='sent'>Me: <b>" + message + "</b> - " + toUsername + "</p>").scrollTop($("div.message")[0].scrollHeight);
-    socket.emit('notification', {
-        to: toUsername,
-        message: message
-    });
-    $("#chatInput").val("").focus();
-}
 }
 
 window.onload = () => {
     new Client();
-    
+
     socket.on('notification', function(data) {
         $("div.message").append("<p class='received'>" + data.from + ": <b>" + data.message + "</b></p>").scrollTop($("div.message")[0].scrollHeight);
         console.error(data);
